@@ -6,10 +6,7 @@ import scala.collection.mutable.MutableList
 
 class FlowGraph {
 
-  initDB
-
   val graph = MutableList[Node]()
-  var connection: Connection = null
 
   def addNode(node: Node) {
     graph += node
@@ -40,12 +37,15 @@ class FlowGraph {
   }
 
   def persistGraph: Unit = {
-    var stmt: Statement = connection.createStatement
+    Class.forName("org.h2.Driver")
+    val connection = DriverManager.getConnection("jdbc:h2:tcp://localhost/~/test", "sa", "sc")
+    val stmt: Statement = connection.createStatement
     try {
       graph.foreach(node => {
         node.sources.foreach(source => {
+          println(s"Inserting $node")
           val insertQuery = s"insert into flowgraph.nodes values (${node.name},${source.name})"
-          val rows = stmt.execute(insertQuery)
+          stmt.execute(insertQuery)
         })
       })
       connection commit
@@ -54,11 +54,7 @@ class FlowGraph {
     }
     finally {
       stmt.close
+      connection.close()
     }
-  }
-
-  def initDB(): Unit = {
-    Class.forName("org.h2.Driver")
-    connection = DriverManager.getConnection("jdbc:h2:tcp://localhost/~/test", "sa", "sc")
   }
 }
