@@ -18,30 +18,32 @@ object FlowGraphParser {
   }
 
   def parseQueries(fileName: File) {
-    val lines = scala.io.Source.fromFile(fileName).mkString(" ")
+    val lines = scala.io.Source.fromFile(fileName).getLines().mkString(" ")
     for (query <- lines.split(";")) {
       var node: Node = null
       for (str <- patterns.findAllIn(query)) {
-        if (str.matches(s"\\A($createTablePattern)\\s+.*")) {
-          val tableName = str.substring(str.lastIndexOf(" "))
+        val clause = str.trim
+        println(s"Clause: $clause")
+        if (clause.matches(s"\\A($createTablePattern)\\s+.*")) {
+          val tableName = clause.substring(clause.lastIndexOf(" "))
           node = new Node(tableName.trim)
           graph.addNode(new Node(tableName.trim))
           println("Added Node : " + tableName.trim)
         }
-        if (str.matches(s"\\A($insertTablePattern)\\s+.*")) {
-          val tableName = str.substring(str.lastIndexOf(" "))
+        if (clause.matches(s"\\A($insertTablePattern)\\s+.*")) {
+          val tableName = clause.substring(clause.lastIndexOf(" "))
           node = new Node(tableName.trim)
         }
-        if (str.matches(s"\\A($sourceTablePattern)\\s+.*")) {
-          val tableName = str.substring(str.lastIndexOf(" "))
+        if (clause.matches(s"\\A($sourceTablePattern)\\s+.*")) {
+          val tableName = clause.substring(clause.lastIndexOf(" "))
           graph.addSource(node, tableName.trim)
         }
-        println(s"$str ")
+        println(s"$clause ")
       }
-      println("------")
+      //println("------")
     }
-
     println(graph.toString)
+
   }
 
 }
