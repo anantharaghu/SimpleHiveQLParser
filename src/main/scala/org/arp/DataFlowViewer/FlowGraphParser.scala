@@ -15,7 +15,8 @@ object FlowGraphParser {
     val queryFolder = "\\\\dwshome-a.homeoffice.wal-mart.com\\dwsuserdata$\\anana1\\Documents\\assortment_analytics\\ao_base_data_layer\\oozie\\load_base_data_layer"
     val files = new java.io.File(queryFolder).listFiles
     files.foreach(parseQueries(_))
-    println(patterns)
+    println(graph.toString)
+    graph.persistGraph
   }
 
   def parseQueries(fileName: File) {
@@ -43,7 +44,5 @@ object FlowGraphParser {
       }
       //println("------")
     }
-    println(graph.toString)
-    graph.persistGraph
   }
 }

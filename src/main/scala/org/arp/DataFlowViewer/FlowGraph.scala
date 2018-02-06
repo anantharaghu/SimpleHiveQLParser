@@ -1,6 +1,6 @@
 package org.arp.DataFlowViewer
 
-import java.sql.{Connection, DriverManager, Statement}
+import java.sql.{DriverManager, Statement}
 
 import scala.collection.mutable.MutableList
 
@@ -8,8 +8,8 @@ class FlowGraph {
 
   val graph = MutableList[Node]()
 
-  def addNode(node: Node) {
-    graph += node
+  def addSource(node: Node, source: String) {
+    addSource(node, graph.find(x => x.name.equalsIgnoreCase(source)).getOrElse(new Node(source)))
   }
 
   def addSource(node: Node, source: Node) {
@@ -24,8 +24,8 @@ class FlowGraph {
     }
   }
 
-  def addSource(node: Node, source: String) {
-    addSource(node, graph.find(x => x.name.equalsIgnoreCase(source)).getOrElse(new Node(source)))
+  def addNode(node: Node) {
+    graph += node
   }
 
   def getNodes: MutableList[Node] = {
@@ -42,11 +42,16 @@ class FlowGraph {
     val stmt: Statement = connection.createStatement
     try {
       graph.foreach(node => {
-        node.sources.foreach(source => {
-          println(s"Inserting $node")
-          val insertQuery = s"insert into flowgraph.nodes values (${node.name},${source.name})"
-          stmt.execute(insertQuery)
-        })
+        if (node.sources == null || node.sources.isEmpty)
+          stmt.execute(s"insert into FLOWGRAPH.NODES values ('${node.name}','')")
+        else {
+          node.sources.foreach(source => {
+            println(s"Inserting $node")
+            val insertQuery = s"insert into FLOWGRAPH.NODES values ('${node.name}','${source.name}')"
+            val insertStat = stmt.execute(insertQuery)
+            println(insertStat)
+          })
+        }
       })
       connection commit
     } catch {
