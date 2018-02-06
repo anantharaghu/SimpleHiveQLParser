@@ -1,6 +1,7 @@
 package org.arp.DataFlowViewer
 
 import java.io.File
+import java.sql.{Connection, DriverManager}
 
 object FlowGraphParser {
   val sourceTablePattern = "FROM|JOIN"
@@ -43,7 +44,6 @@ object FlowGraphParser {
       //println("------")
     }
     println(graph.toString)
-
+    graph.persistGraph
   }
-
 }
