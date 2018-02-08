@@ -6,26 +6,33 @@ import scala.collection.mutable.MutableList
 
 class FlowGraph {
 
-  val graph = MutableList[Node]()
+  private val graph = MutableList[Node]()
 
   def addSource(node: Node, source: String) {
-    addSource(node, graph.find(x => x.name.equalsIgnoreCase(source)).getOrElse(new Node(source)))
+    val sourceNode = new Node(source)
+    val srcNode = graph.find(_.name.equalsIgnoreCase(source)).getOrElse(sourceNode)
+    addSource(node, srcNode)
   }
 
   def addSource(node: Node, source: Node) {
-    if (!graph.contains(node)) {
-      addNode(node)
-    }
-    if (source != null) {
-      if (!graph.contains(source)) {
-        addNode(source)
-      }
-      node.addSource(source)
-    }
+    addNode(node)
+    addNode(source)
+    node.addSource(source)
+  }
+
+  def addNode(node: String): Unit = {
+    addNode(new Node(node.trim))
   }
 
   def addNode(node: Node) {
-    graph += node
+    if (!graph.contains(node)) {
+      graph += node
+      println(s"Added node ${node.name}")
+    }
+  }
+
+  def findNode(node: String): Option[Node] = {
+    graph.find(_.name.equalsIgnoreCase(node))
   }
 
   def getNodes: MutableList[Node] = {

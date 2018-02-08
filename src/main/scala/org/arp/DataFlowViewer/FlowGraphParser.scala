@@ -1,13 +1,13 @@
 package org.arp.DataFlowViewer
 
 import java.io.File
-import java.sql.{Connection, DriverManager}
 
 object FlowGraphParser {
   val sourceTablePattern = "FROM|JOIN"
   val insertTablePattern = "INSERT(\\s+OVERWRITE|\\s+INTO)\\s+TABLE"
   val createTablePattern = "CREATE\\s+TABLE(\\s+IF\\s+NOT\\s+EXISTS)?"
-  val patterns = s"(?i)($createTablePattern|$insertTablePattern|$sourceTablePattern)\\s+\\S+\\w+".r
+  val useSchemaPattern = "USE"
+  val patterns = s"(?i)($createTablePattern|$insertTablePattern|$sourceTablePattern|$useSchemaPattern)\\s+\\S+".r
   val graph = new FlowGraph
 
   def main(args: Array[String]) {
@@ -22,27 +22,26 @@ object FlowGraphParser {
   def parseQueries(fileName: File) {
     val lines = scala.io.Source.fromFile(fileName).getLines().mkString(" ")
     for (query <- lines.split(";")) {
+      var currentSchema: String = ""
       var node: Node = null
       for (str <- patterns.findAllIn(query)) {
         val clause = str.trim
-        println(s"Clause: $clause")
-        if (clause.matches(s"\\A($createTablePattern)\\s+.*")) {
-          val tableName = clause.substring(clause.lastIndexOf(" "))
-          node = new Node(tableName.trim)
-          graph.addNode(new Node(tableName.trim))
-          println("Added Node : " + tableName.trim)
+        if (clause.matches(s"\\A($createTablePattern)\\s+.*") || clause.matches(s"\\A($insertTablePattern)\\s+.*")) {
+          var tableName = clause.substring(clause.lastIndexOf(" ")).trim
+          if (!tableName.contains("."))
+            tableName = s"$currentSchema.$tableName"
+          node = graph.findNode(tableName).getOrElse(new Node(tableName))
+          graph.addNode(node)
+        } else if (clause.matches(s"\\A($sourceTablePattern)\\s+.*")) {
+          val tableName = clause.substring(clause.lastIndexOf(" ")).trim
+          if (!tableName.startsWith("(")) {
+            graph.addSource(node, tableName)
+          }
+        } else if (clause.matches(s"\\A($useSchemaPattern)\\s+.*")) {
+          currentSchema = clause.substring(clause.lastIndexOf(" ")).trim
         }
-        if (clause.matches(s"\\A($insertTablePattern)\\s+.*")) {
-          val tableName = clause.substring(clause.lastIndexOf(" "))
-          node = new Node(tableName.trim)
-        }
-        if (clause.matches(s"\\A($sourceTablePattern)\\s+.*")) {
-          val tableName = clause.substring(clause.lastIndexOf(" "))
-          graph.addSource(node, tableName.trim)
-        }
-        println(s"$clause ")
       }
-      //println("------")
     }
   }
+
 }

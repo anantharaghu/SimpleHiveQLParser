@@ -4,13 +4,14 @@ import scala.collection.mutable.MutableList
 
 class Node (var name : String) {
 
-  var sources = MutableList[Node]()
+  val sources = MutableList[Node]()
 
-  var children = MutableList[Node]()
+  val children = MutableList[Node]()
 
   def addSource(node : Node) {
     if (!sources.contains(node))
       sources += node
+    println(s"Added source ${node.name} to $name - ${sources.mkString(", ")} ")
     node.addChild(this)
   }
 
@@ -32,6 +33,5 @@ class Node (var name : String) {
       case otherNode : Node => this.name.equalsIgnoreCase(otherNode.name)
       case _ => false
     }
-
   }
 }
